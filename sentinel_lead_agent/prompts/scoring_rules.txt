@@ -1,10 +1,17 @@
-Increase lead score when:
-- Federal contracts
-- DoD references
-- NIST references
-- CMMC references
-- MSP or IT provider
+Increase score when evidence shows:
+- Federal contracting, subcontracting, defense delivery, or agency support.
+- CMMC, NIST 800-171, DFARS, FedRAMP, SSP, POA&M, or related compliance pressure.
+- IT, cybersecurity, engineering, manufacturing, or MSP service lines tied to regulated delivery.
+- Small to mid-sized operating footprint with likely limited internal compliance capacity.
 
-Decrease score when:
-- Large enterprise
-- No government indicators
+Decrease score when evidence shows:
+- Large enterprise scale.
+- Mature internal compliance or security governance already advertised.
+- No sign of regulated delivery, government work, or security/compliance exposure.
+- Geography far outside the target focus without stronger offsetting signals.
+
+Scoring bands:
+- 1 to 3: weak fit.
+- 4 to 6: moderate fit.
+- 7 to 8: strong fit.
+- 9 to 10: immediate priority.
