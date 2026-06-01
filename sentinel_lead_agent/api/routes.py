@@ -11,6 +11,8 @@ async def health(request: Request) -> dict[str, object]:
     return {
         "status": "ok",
         "firecrawl_enabled": settings.firecrawl_enabled,
+        "tavily_enabled": settings.tavily_enabled,
+        "apollo_enabled": settings.apollo_enabled,
         "playwright_enabled": settings.playwright_enabled,
         "model": settings.openai_model,
     }

@@ -99,50 +99,21 @@ class OpenAIAgentRuntime:
 		if not payload.query and not payload.seed_companies and not payload.websites:
 			raise ValueError("Provide at least one of: query, seed_companies, or websites.")
 
-		if not payload.query:
-			leads = await self.search_tool.search_businesses(
-				query=None,
-				limit=payload.limit,
-				search_terms=payload.search_terms,
-				location_text=payload.location_text,
-				zip_code=payload.zip_code,
-				city=payload.city,
-				state=payload.state,
-				region=payload.region,
-				radius_miles=payload.radius_miles,
-				seed_companies=payload.seed_companies,
-				websites=payload.websites,
-			)
-			return DiscoveryAgentOutput(leads=leads)
-
-		if payload.has_structured_search_intent():
-			leads = await self.search_tool.search_businesses(
-				query=payload.query,
-				limit=payload.limit,
-				search_terms=payload.search_terms,
-				location_text=payload.location_text,
-				zip_code=payload.zip_code,
-				city=payload.city,
-				state=payload.state,
-				region=payload.region,
-				radius_miles=payload.radius_miles,
-				seed_companies=payload.seed_companies,
-				websites=payload.websites,
-			)
-			return DiscoveryAgentOutput(leads=leads)
-
-		request_text = (
-			f"Search for up to {payload.limit} leads for this query: {payload.query}. "
-			"Return only grounded leads from the search tool, never fabricate company facts. "
-			"If present, use these structured filters in the search tool call: "
-			f"search_terms={payload.search_terms}, location_text={payload.location_text}, zip_code={payload.zip_code}, "
-			f"city={payload.city}, state={payload.state}, region={payload.region}, radius_miles={payload.radius_miles}."
+		# Deterministic discovery avoids LLM-only misses and always executes provider search first.
+		leads = await self.search_tool.search_businesses(
+			query=payload.query,
+			limit=payload.limit,
+			search_terms=payload.search_terms,
+			location_text=payload.location_text,
+			zip_code=payload.zip_code,
+			city=payload.city,
+			state=payload.state,
+			region=payload.region,
+			radius_miles=payload.radius_miles,
+			seed_companies=payload.seed_companies,
+			websites=payload.websites,
 		)
-		result = await Runner.run(self.discovery_agent, request_text)
-		output = result.final_output
-		if isinstance(output, DiscoveryAgentOutput):
-			return output
-		return DiscoveryAgentOutput.model_validate(output)
+		return DiscoveryAgentOutput(leads=leads)
 
 	async def analyze(self, lead: DiscoveredLead) -> WebsiteAnalysis | None:
 		self._ensure_runtime_configured()

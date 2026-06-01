@@ -25,6 +25,13 @@ load_dotenv()
 class StageInput(BaseModel):
     query: str = Field(description="Lead search query.")
     limit: int = Field(default=5, ge=1, le=20, description="Maximum number of leads.")
+    search_terms: list[str] = Field(default_factory=list, description="Optional explicit search keywords.")
+    location_text: str | None = Field(default=None, description="Optional free-form location filter.")
+    zip_code: str | None = Field(default=None, description="Optional ZIP code filter.")
+    city: str | None = Field(default=None, description="Optional city filter.")
+    state: str | None = Field(default=None, description="Optional state filter.")
+    region: str | None = Field(default=None, description="Optional region filter.")
+    radius_miles: int | None = Field(default=None, ge=1, le=250, description="Optional radius in miles.")
 
 
 def _build_runtime() -> OpenAIAgentRuntime:
@@ -40,10 +47,51 @@ class DiscoveryTool(BaseTool):
     description: str = "Run lead discovery and return structured discovery JSON with candidate leads."
     args_schema: type[BaseModel] = StageInput
 
-    def _run(self, query: str, limit: int = 5) -> str:
-        runtime = _build_runtime()
-        payload = LeadIntelligenceRequest(query=query, limit=limit)
+    def _run(
+        self,
+        query: str,
+        limit: int = 5,
+        search_terms: list[str] | None = None,
+        location_text: str | None = None,
+        zip_code: str | None = None,
+        city: str | None = None,
+        state: str | None = None,
+        region: str | None = None,
+        radius_miles: int | None = None,
+    ) -> str:
+        settings = Settings.from_env()
+        runtime = OpenAIAgentRuntime(settings, LeadSearchTool(settings), WebsiteScraperTool(settings), LeadScoringTool(settings))
+        payload = LeadIntelligenceRequest(
+            query=query,
+            limit=limit,
+            search_terms=search_terms or [],
+            location_text=location_text,
+            zip_code=zip_code,
+            city=city,
+            state=state,
+            region=region,
+            radius_miles=radius_miles,
+        )
         output = asyncio.run(runtime.discover(payload))
+        if not output.leads:
+            diagnostics = {
+                "query": query,
+                "limit": limit,
+                "search_terms": search_terms or [],
+                "location_text": location_text,
+                "zip_code": zip_code,
+                "city": city,
+                "state": state,
+                "region": region,
+                "radius_miles": radius_miles,
+                "provider_status": {
+                    "firecrawl_enabled": settings.firecrawl_enabled,
+                    "tavily_enabled": settings.tavily_enabled,
+                    "apollo_enabled": settings.apollo_enabled,
+                },
+                "message": "No leads were discovered for the query. Configure at least one provider API key or provide seed_companies/websites.",
+            }
+            return json.dumps(diagnostics, indent=2)
         return output.model_dump_json(indent=2)
 
 
@@ -52,9 +100,30 @@ class AnalyzerTool(BaseTool):
     description: str = "Run website analysis for discovered leads and return structured analysis JSON."
     args_schema: type[BaseModel] = StageInput
 
-    def _run(self, query: str, limit: int = 5) -> str:
+    def _run(
+        self,
+        query: str,
+        limit: int = 5,
+        search_terms: list[str] | None = None,
+        location_text: str | None = None,
+        zip_code: str | None = None,
+        city: str | None = None,
+        state: str | None = None,
+        region: str | None = None,
+        radius_miles: int | None = None,
+    ) -> str:
         runtime = _build_runtime()
-        payload = LeadIntelligenceRequest(query=query, limit=limit)
+        payload = LeadIntelligenceRequest(
+            query=query,
+            limit=limit,
+            search_terms=search_terms or [],
+            location_text=location_text,
+            zip_code=zip_code,
+            city=city,
+            state=state,
+            region=region,
+            radius_miles=radius_miles,
+        )
         discovery = asyncio.run(runtime.discover(payload))
 
         analyses: list[dict[str, Any]] = []
@@ -75,9 +144,30 @@ class QualificationTool(BaseTool):
     description: str = "Run lead qualification on discovered and analyzed leads and return structured qualification JSON."
     args_schema: type[BaseModel] = StageInput
 
-    def _run(self, query: str, limit: int = 5) -> str:
+    def _run(
+        self,
+        query: str,
+        limit: int = 5,
+        search_terms: list[str] | None = None,
+        location_text: str | None = None,
+        zip_code: str | None = None,
+        city: str | None = None,
+        state: str | None = None,
+        region: str | None = None,
+        radius_miles: int | None = None,
+    ) -> str:
         runtime = _build_runtime()
-        payload = LeadIntelligenceRequest(query=query, limit=limit)
+        payload = LeadIntelligenceRequest(
+            query=query,
+            limit=limit,
+            search_terms=search_terms or [],
+            location_text=location_text,
+            zip_code=zip_code,
+            city=city,
+            state=state,
+            region=region,
+            radius_miles=radius_miles,
+        )
         discovery = asyncio.run(runtime.discover(payload))
 
         qualifications: list[dict[str, Any]] = []
@@ -100,10 +190,31 @@ class OutreachTool(BaseTool):
     description: str = "Run the complete outreach stage and return final lead intelligence JSON."
     args_schema: type[BaseModel] = StageInput
 
-    def _run(self, query: str, limit: int = 5) -> str:
+    def _run(
+        self,
+        query: str,
+        limit: int = 5,
+        search_terms: list[str] | None = None,
+        location_text: str | None = None,
+        zip_code: str | None = None,
+        city: str | None = None,
+        state: str | None = None,
+        region: str | None = None,
+        radius_miles: int | None = None,
+    ) -> str:
         settings = Settings.from_env()
         service = LeadIntelligenceService(settings)
-        payload = LeadIntelligenceRequest(query=query, limit=limit)
+        payload = LeadIntelligenceRequest(
+            query=query,
+            limit=limit,
+            search_terms=search_terms or [],
+            location_text=location_text,
+            zip_code=zip_code,
+            city=city,
+            state=state,
+            region=region,
+            radius_miles=radius_miles,
+        )
 
         try:
             response = asyncio.run(service.generate_intelligence(payload))

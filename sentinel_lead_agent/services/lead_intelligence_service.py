@@ -27,7 +27,16 @@ class LeadIntelligenceService:
         leads = discovery_output.leads[: payload.limit]
 
         if not leads:
-            raise ValueError("No leads were discovered. Provide a broader query or seed companies/websites.")
+            provider_status = {
+                "firecrawl_enabled": self.settings.firecrawl_enabled,
+                "tavily_enabled": self.settings.tavily_enabled,
+                "apollo_enabled": self.settings.apollo_enabled,
+            }
+            raise ValueError(
+                "No leads were discovered. "
+                "Provide a broader query or seed companies/websites. "
+                f"Search provider status: {provider_status}."
+            )
 
         records = await asyncio.gather(*(self._build_record(lead) for lead in leads))
         self.logger.info(
