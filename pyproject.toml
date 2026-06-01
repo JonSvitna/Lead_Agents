@@ -29,3 +29,4 @@ include = ["sentinel_lead_agent*", "lead_agents*"]
 
 [tool.crewai]
 type = "crew"
+source = "src"
