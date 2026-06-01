@@ -1,0 +1,7 @@
+openai-agents
+fastapi
+uvicorn
+playwright
+firecrawl-py
+pydantic
+python-dotenv

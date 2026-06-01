@@ -1,0 +1,10 @@
+Increase lead score when:
+- Federal contracts
+- DoD references
+- NIST references
+- CMMC references
+- MSP or IT provider
+
+Decrease score when:
+- Large enterprise
+- No government indicators
