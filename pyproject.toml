@@ -17,11 +17,15 @@ dependencies = [
     "firecrawl-py",
     "pydantic",
     "python-dotenv",
+    "httpx",
 ]
 
 [tool.setuptools]
 py-modules = []
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sentinel_lead_agent*"]
+where = [".", "src"]
+include = ["sentinel_lead_agent*", "lead_agents*"]
+
+[tool.crewai]
+type = "crew"
