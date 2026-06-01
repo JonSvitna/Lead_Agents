@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lead-agents"
+version = "0.1.0"
+description = "AI-powered lead intelligence engine with FastAPI and CrewAI orchestration"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "crewai>=0.95.0",
+    "openai-agents",
+    "fastapi",
+    "uvicorn",
+    "playwright",
+    "firecrawl-py",
+    "pydantic",
+    "python-dotenv",
+]
+
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sentinel_lead_agent*"]
