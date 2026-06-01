@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -112,90 +113,75 @@ class OutreachTool(BaseTool):
         return response.model_dump_json(indent=2)
 
 
-def build_crew() -> Crew:
-    discovery_agent = Agent(
-        role="Lead Discovery Agent",
-        goal="Find grounded lead candidates for the search query.",
-        backstory="You identify candidate companies from trusted search results and avoid fabricated data.",
-        tools=[DiscoveryTool()],
-        allow_delegation=False,
-        verbose=True,
-    )
+@CrewBase
+class LeadAgentsCrew:
+    """AI-powered Lead Intelligence crew."""
 
-    analyzer_agent = Agent(
-        role="Website Analyzer Agent",
-        goal="Analyze discovered lead websites for compliance and government-contracting signals.",
-        backstory="You extract practical website signals that support qualification decisions.",
-        tools=[AnalyzerTool()],
-        allow_delegation=False,
-        verbose=True,
-    )
+    agents_config = "config/agents.yaml"
+    tasks_config = "config/tasks.yaml"
 
-    qualification_agent = Agent(
-        role="Qualification Agent",
-        goal="Score and prioritize leads based on evidence from discovery and analysis.",
-        backstory="You turn lead evidence into actionable qualification output.",
-        tools=[QualificationTool()],
-        allow_delegation=False,
-        verbose=True,
-    )
+    @agent
+    def lead_discovery_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["lead_discovery_agent"],
+            tools=[DiscoveryTool()],
+            allow_delegation=False,
+            verbose=True,
+        )
 
-    outreach_agent = Agent(
-        role="Outreach Generation Agent",
-        goal="Generate outreach content from qualified lead context.",
-        backstory="You produce concise outreach grounded in the qualification and website context.",
-        tools=[OutreachTool()],
-        allow_delegation=False,
-        verbose=True,
-    )
+    @agent
+    def website_analyzer_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["website_analyzer_agent"],
+            tools=[AnalyzerTool()],
+            allow_delegation=False,
+            verbose=True,
+        )
 
-    discovery_task = Task(
-        description=(
-            "Run discovery for query '{query}' with limit {limit}. "
-            "Use run_discovery_stage and return the structured discovery JSON."
-        ),
-        expected_output="Structured JSON with discovered leads.",
-        agent=discovery_agent,
-    )
+    @agent
+    def qualification_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["qualification_agent"],
+            tools=[QualificationTool()],
+            allow_delegation=False,
+            verbose=True,
+        )
 
-    analyzer_task = Task(
-        description=(
-            "Run analyzer stage for query '{query}' with limit {limit}. "
-            "Use run_analyzer_stage and return structured analysis JSON for discovered leads."
-        ),
-        expected_output="Structured JSON with lead analyses.",
-        agent=analyzer_agent,
-        context=[discovery_task],
-    )
+    @agent
+    def outreach_generation_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config["outreach_generation_agent"],
+            tools=[OutreachTool()],
+            allow_delegation=False,
+            verbose=True,
+        )
 
-    qualification_task = Task(
-        description=(
-            "Run qualification stage for query '{query}' with limit {limit}. "
-            "Use run_qualification_stage and return structured qualification JSON."
-        ),
-        expected_output="Structured JSON with lead qualification output.",
-        agent=qualification_agent,
-        context=[discovery_task, analyzer_task],
-    )
+    @task
+    def run_discovery_stage(self) -> Task:
+        return Task(config=self.tasks_config["run_discovery_stage"])
 
-    outreach_task = Task(
-        description=(
-            "Run final outreach stage for query '{query}' with limit {limit}. "
-            "Use run_outreach_stage and return the final structured pipeline JSON exactly as produced."
-        ),
-        expected_output="Final structured JSON response from the lead-intelligence pipeline.",
-        agent=outreach_agent,
-        context=[discovery_task, analyzer_task, qualification_task],
-    )
+    @task
+    def run_analyzer_stage(self) -> Task:
+        return Task(config=self.tasks_config["run_analyzer_stage"])
 
-    return Crew(
-        agents=[discovery_agent, analyzer_agent, qualification_agent, outreach_agent],
-        tasks=[discovery_task, analyzer_task, qualification_task, outreach_task],
-        process=Process.sequential,
-        verbose=True,
-    )
+    @task
+    def run_qualification_stage(self) -> Task:
+        return Task(config=self.tasks_config["run_qualification_stage"])
+
+    @task
+    def run_outreach_stage(self) -> Task:
+        return Task(config=self.tasks_config["run_outreach_stage"])
+
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True,
+        )
 
 
 def kickoff(inputs: dict | None = None) -> Any:
     payload = inputs or {"query": "Maryland defense subcontractor MSP", "limit": 5}
-    return build_crew().kickoff(inputs=payload)
+    return LeadAgentsCrew().crew().kickoff(inputs=payload)
