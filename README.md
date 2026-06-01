@@ -33,6 +33,8 @@ The implementation uses:
 - Pydantic
 - Async orchestration
 - Firecrawl for search and scraping when configured
+- Tavily as a lead-search fallback when Firecrawl is unavailable or out of credits
+- Apollo organization search as an additional lead-search fallback
 - Playwright fallback for website analysis
 - Environment-variable based configuration
 - Structured JSON logging
@@ -86,7 +88,16 @@ Required for agent execution:
 Optional but recommended:
 
 - `FIRECRAWL_API_KEY` for search and scrape support
+- `TAVILY_API_KEY` for lead-search fallback support
+- `APOLLO_API_KEY` for organization-search fallback support
 - `ENABLE_PLAYWRIGHT=true` if you want Playwright website analysis fallback
+
+Lead-search provider order:
+
+- Firecrawl
+- Tavily
+- Apollo
+- Seed companies or direct website inputs from request payload
 
 ## Running The API
 
@@ -107,6 +118,19 @@ Swagger docs:
 ```text
 http://127.0.0.1:8000/docs
 ```
+
+## Local Testing Without CrewAI AMP
+
+If you just want to validate the lead intelligence pipeline in your current environment,
+you do not need the CrewAI deployment path or `uv.lock`.
+
+Run the pipeline directly:
+
+```bash
+python -m sentinel_lead_agent.local_test --query "Maryland defense subcontractor MSP" --limit 3
+```
+
+This exercises the same discovery, analysis, qualification, and outreach service used by the API.
 
 ## Example Request
 
