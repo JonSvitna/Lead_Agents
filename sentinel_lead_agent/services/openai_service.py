@@ -42,9 +42,29 @@ class OpenAIAgentRuntime:
 		search_service = self.search_tool
 
 		@function_tool
-		async def search_businesses(query: str, limit: int = 5) -> str:
+		async def search_businesses(
+			query: str,
+			limit: int = 5,
+			search_terms: list[str] | None = None,
+			location_text: str | None = None,
+			zip_code: str | None = None,
+			city: str | None = None,
+			state: str | None = None,
+			region: str | None = None,
+			radius_miles: int | None = None,
+		) -> str:
 			"""Search for candidate business leads and return structured JSON results."""
-			leads = await search_service.search_businesses(query=query, limit=limit)
+			leads = await search_service.search_businesses(
+				query=query,
+				limit=limit,
+				search_terms=search_terms,
+				location_text=location_text,
+				zip_code=zip_code,
+				city=city,
+				state=state,
+				region=region,
+				radius_miles=radius_miles,
+			)
 			return json.dumps([lead.model_dump(mode="json") for lead in leads], indent=2)
 
 		return search_businesses
@@ -83,6 +103,29 @@ class OpenAIAgentRuntime:
 			leads = await self.search_tool.search_businesses(
 				query=None,
 				limit=payload.limit,
+				search_terms=payload.search_terms,
+				location_text=payload.location_text,
+				zip_code=payload.zip_code,
+				city=payload.city,
+				state=payload.state,
+				region=payload.region,
+				radius_miles=payload.radius_miles,
+				seed_companies=payload.seed_companies,
+				websites=payload.websites,
+			)
+			return DiscoveryAgentOutput(leads=leads)
+
+		if payload.has_structured_search_intent():
+			leads = await self.search_tool.search_businesses(
+				query=payload.query,
+				limit=payload.limit,
+				search_terms=payload.search_terms,
+				location_text=payload.location_text,
+				zip_code=payload.zip_code,
+				city=payload.city,
+				state=payload.state,
+				region=payload.region,
+				radius_miles=payload.radius_miles,
 				seed_companies=payload.seed_companies,
 				websites=payload.websites,
 			)
@@ -90,7 +133,10 @@ class OpenAIAgentRuntime:
 
 		request_text = (
 			f"Search for up to {payload.limit} leads for this query: {payload.query}. "
-			"Return only grounded leads from the search tool, never fabricate company facts."
+			"Return only grounded leads from the search tool, never fabricate company facts. "
+			"If present, use these structured filters in the search tool call: "
+			f"search_terms={payload.search_terms}, location_text={payload.location_text}, zip_code={payload.zip_code}, "
+			f"city={payload.city}, state={payload.state}, region={payload.region}, radius_miles={payload.radius_miles}."
 		)
 		result = await Runner.run(self.discovery_agent, request_text)
 		output = result.final_output

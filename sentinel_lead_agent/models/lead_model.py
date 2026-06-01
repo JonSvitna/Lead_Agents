@@ -112,11 +112,37 @@ class OutreachAgentOutput(BaseModel):
 class LeadIntelligenceRequest(BaseModel):
     query: str | None = Field(default=None, description="Search query for new leads.")
     limit: int = Field(default=5, ge=1, le=20)
+    search_terms: list[str] = Field(
+        default_factory=list,
+        description="Optional explicit keywords to prioritize during discovery.",
+    )
+    location_text: str | None = Field(
+        default=None,
+        description="Optional free-form location filter (for example: 'near Baltimore, MD').",
+    )
+    zip_code: str | None = Field(default=None, description="Optional US ZIP code filter.")
+    city: str | None = Field(default=None, description="Optional city filter.")
+    state: str | None = Field(default=None, description="Optional state or region code filter.")
+    region: str | None = Field(default=None, description="Optional broader region filter.")
+    radius_miles: int | None = Field(default=None, ge=1, le=250, description="Optional distance radius in miles.")
     websites: list[str] = Field(default_factory=list, description="Websites to analyze directly.")
     seed_companies: list[LeadSeedInput] = Field(
         default_factory=list,
         description="Known companies to enrich when external search is unavailable or when the user wants targeted analysis.",
     )
+
+    def has_structured_search_intent(self) -> bool:
+        return any(
+            [
+                bool(self.search_terms),
+                self.location_text is not None,
+                self.zip_code is not None,
+                self.city is not None,
+                self.state is not None,
+                self.region is not None,
+                self.radius_miles is not None,
+            ]
+        )
 
 
 class LeadIntelligenceResponse(BaseModel):
