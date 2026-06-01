@@ -27,6 +27,13 @@ class SearchIntent:
     state: str | None
     region: str | None
     radius_miles: int | None
+    must_include_terms: list[str]
+    exclude_terms: list[str]
+    include_company_types: list[str]
+    exclude_company_types: list[str]
+    employee_min: int | None
+    employee_max: int | None
+    assumptions_used: list[str]
 
 
 class LeadSearchTool:
@@ -45,6 +52,12 @@ class LeadSearchTool:
         state: str | None = None,
         region: str | None = None,
         radius_miles: int | None = None,
+        must_include_terms: list[str] | None = None,
+        exclude_terms: list[str] | None = None,
+        include_company_types: list[str] | None = None,
+        exclude_company_types: list[str] | None = None,
+        employee_min: int | None = None,
+        employee_max: int | None = None,
         seed_companies: list[LeadSeedInput] | None = None,
         websites: list[str] | None = None,
     ) -> list[DiscoveredLead]:
@@ -60,6 +73,12 @@ class LeadSearchTool:
             state=state,
             region=region,
             radius_miles=radius_miles,
+            must_include_terms=must_include_terms,
+            exclude_terms=exclude_terms,
+            include_company_types=include_company_types,
+            exclude_company_types=exclude_company_types,
+            employee_min=employee_min,
+            employee_max=employee_max,
         )
 
         self.logger.info(
@@ -73,6 +92,13 @@ class LeadSearchTool:
                 "state": intent.state,
                 "region": intent.region,
                 "radius_miles": intent.radius_miles,
+                "must_include_terms": intent.must_include_terms,
+                "exclude_terms": intent.exclude_terms,
+                "include_company_types": intent.include_company_types,
+                "exclude_company_types": intent.exclude_company_types,
+                "employee_min": intent.employee_min,
+                "employee_max": intent.employee_max,
+                "assumptions_used": intent.assumptions_used,
             },
         )
 
@@ -280,9 +306,20 @@ class LeadSearchTool:
         state: str | None,
         region: str | None,
         radius_miles: int | None,
+        must_include_terms: list[str] | None,
+        exclude_terms: list[str] | None,
+        include_company_types: list[str] | None,
+        exclude_company_types: list[str] | None,
+        employee_min: int | None,
+        employee_max: int | None,
     ) -> SearchIntent:
         normalized_query = (query or "").strip()
         normalized_terms = [term.strip() for term in (search_terms or []) if term and term.strip()]
+        normalized_must_include = [term.strip() for term in (must_include_terms or []) if term and term.strip()]
+        normalized_exclude = [term.strip() for term in (exclude_terms or []) if term and term.strip()]
+        normalized_include_types = [term.strip() for term in (include_company_types or []) if term and term.strip()]
+        normalized_exclude_types = [term.strip() for term in (exclude_company_types or []) if term and term.strip()]
+        assumptions_used: list[str] = []
 
         extracted_zip = zip_code or self._extract_zip_code(normalized_query)
         extracted_radius = radius_miles or self._extract_radius_miles(normalized_query)
@@ -292,6 +329,31 @@ class LeadSearchTool:
 
         if not normalized_terms:
             normalized_terms = self._extract_search_terms(normalized_query)
+
+        (
+            normalized_terms,
+            normalized_must_include,
+            normalized_exclude,
+            normalized_include_types,
+            normalized_exclude_types,
+            employee_min,
+            employee_max,
+            effective_location,
+            extracted_radius,
+            assumptions_used,
+        ) = self._apply_assisted_defaults(
+            terms=normalized_terms,
+            must_include_terms=normalized_must_include,
+            exclude_terms=normalized_exclude,
+            include_company_types=normalized_include_types,
+            exclude_company_types=normalized_exclude_types,
+            employee_min=employee_min,
+            employee_max=employee_max,
+            query=normalized_query,
+            location_text=effective_location,
+            radius_miles=extracted_radius,
+            assumptions_used=assumptions_used,
+        )
 
         effective_query = normalized_query or " ".join(normalized_terms)
         if not effective_query and effective_location:
@@ -306,6 +368,85 @@ class LeadSearchTool:
             state=state,
             region=region,
             radius_miles=extracted_radius,
+            must_include_terms=normalized_must_include,
+            exclude_terms=normalized_exclude,
+            include_company_types=normalized_include_types,
+            exclude_company_types=normalized_exclude_types,
+            employee_min=employee_min,
+            employee_max=employee_max,
+            assumptions_used=assumptions_used,
+        )
+
+    def _apply_assisted_defaults(
+        self,
+        terms: list[str],
+        must_include_terms: list[str],
+        exclude_terms: list[str],
+        include_company_types: list[str],
+        exclude_company_types: list[str],
+        employee_min: int | None,
+        employee_max: int | None,
+        query: str,
+        location_text: str | None,
+        radius_miles: int | None,
+        assumptions_used: list[str],
+    ) -> tuple[
+        list[str],
+        list[str],
+        list[str],
+        list[str],
+        list[str],
+        int | None,
+        int | None,
+        str | None,
+        int | None,
+        list[str],
+    ]:
+        lowered_terms = {term.lower() for term in terms}
+        lowered_query = query.lower()
+
+        cmmc_context = "cmmc" in lowered_query or "cmmc" in lowered_terms
+        if cmmc_context:
+            for default_term in ["NIST 800-171", "DFARS", "DoD contractor", "MSP", "small business"]:
+                if default_term.lower() not in lowered_terms:
+                    terms.append(default_term)
+            for required_term in ["cmmc", "nist 800-171", "dfars"]:
+                if required_term not in [term.lower() for term in must_include_terms]:
+                    must_include_terms.append(required_term)
+            for blocked_term in ["university", "state government", "federal agency"]:
+                if blocked_term not in [term.lower() for term in exclude_terms]:
+                    exclude_terms.append(blocked_term)
+            if "msp" not in [term.lower() for term in include_company_types]:
+                include_company_types.append("MSP")
+            if "contractor" not in [term.lower() for term in include_company_types]:
+                include_company_types.append("contractor")
+            if "university" not in [term.lower() for term in exclude_company_types]:
+                exclude_company_types.append("university")
+            if "government agency" not in [term.lower() for term in exclude_company_types]:
+                exclude_company_types.append("government agency")
+            if employee_max is None:
+                employee_max = 1000
+            assumptions_used.append("Applied CMMC ICP keyword expansion for discovery precision.")
+
+        if not location_text:
+            location_text = "Maryland OR Virginia OR Washington DC"
+            assumptions_used.append("Used default target region (MD/VA/DC) because no location was provided.")
+
+        if radius_miles is None and self._extract_zip_code(query):
+            radius_miles = 25
+            assumptions_used.append("Applied default 25-mile radius because ZIP was present without radius.")
+
+        return (
+            terms[:10],
+            must_include_terms[:10],
+            exclude_terms[:10],
+            include_company_types[:10],
+            exclude_company_types[:10],
+            employee_min,
+            employee_max,
+            location_text,
+            radius_miles,
+            assumptions_used,
         )
 
     def _build_provider_query(self, intent: SearchIntent) -> str:
@@ -322,6 +463,9 @@ class LeadSearchTool:
 
         if intent.radius_miles:
             parts.append(f"within {intent.radius_miles} miles")
+
+        # Reduce broad non-ICP results from generic web search providers.
+        parts.append("NOT university NOT wikipedia NOT gov")
 
         return " ".join(part.strip() for part in parts if part).strip()
 
@@ -382,6 +526,38 @@ class LeadSearchTool:
         if not leads:
             return []
 
+        blocked_tokens = [
+            "university",
+            "wikipedia",
+            "federal reserve",
+            "department of",
+            "county government",
+            "state government",
+        ]
+
+        filtered: list[DiscoveredLead] = []
+        for lead in leads:
+            lead_text = " ".join([lead.company_name, lead.website or "", lead.industry or "", *(lead.why_match or [])]).lower()
+            if any(token in lead_text for token in blocked_tokens):
+                continue
+            filtered.append(lead)
+
+        if not filtered:
+            filtered = leads
+
+        gated, reject_reason_counts = self._apply_icp_gate(filtered, intent)
+        if gated:
+            filtered = gated
+
+        self.logger.info(
+            "lead_search_gate_summary",
+            extra={
+                "input_count": len(leads),
+                "post_noise_filter_count": len(filtered),
+                "reject_reason_counts": reject_reason_counts,
+            },
+        )
+
         lowered_terms = [term.lower() for term in intent.search_terms]
         location_tokens = [
             token.lower()
@@ -398,8 +574,61 @@ class LeadSearchTool:
             location_hits = sum(1 for token in location_tokens if token in full_text)
             return lead.confidence + (0.08 * term_hits) + (0.12 * location_hits)
 
-        ranked = sorted(leads, key=score, reverse=True)
+        ranked = sorted(filtered, key=score, reverse=True)
         return ranked[:limit]
+
+    def _apply_icp_gate(self, leads: list[DiscoveredLead], intent: SearchIntent) -> tuple[list[DiscoveredLead], dict[str, int]]:
+        accepted: list[DiscoveredLead] = []
+        reject_reason_counts: dict[str, int] = {}
+
+        must_include = [term.lower() for term in intent.must_include_terms]
+        exclude_terms = [term.lower() for term in intent.exclude_terms]
+        include_types = [term.lower() for term in intent.include_company_types]
+        exclude_types = [term.lower() for term in intent.exclude_company_types]
+
+        for lead in leads:
+            text = " ".join([lead.company_name, lead.website or "", lead.location or "", lead.industry or "", *(lead.why_match or [])]).lower()
+
+            reject_reason: str | None = None
+
+            if must_include and not any(term in text for term in must_include):
+                reject_reason = "missing_must_include"
+
+            if not reject_reason and exclude_terms and any(term in text for term in exclude_terms):
+                reject_reason = "matched_exclude_term"
+
+            if not reject_reason and include_types and not any(company_type in text for company_type in include_types):
+                reject_reason = "missing_include_company_type"
+
+            if not reject_reason and exclude_types and any(company_type in text for company_type in exclude_types):
+                reject_reason = "matched_exclude_company_type"
+
+            employee_value = self._extract_employee_count(lead.employee_estimate)
+            if not reject_reason and intent.employee_min is not None and employee_value is not None and employee_value < intent.employee_min:
+                reject_reason = "below_employee_min"
+
+            if not reject_reason and intent.employee_max is not None and employee_value is not None and employee_value > intent.employee_max:
+                reject_reason = "above_employee_max"
+
+            if reject_reason:
+                reject_reason_counts[reject_reason] = reject_reason_counts.get(reject_reason, 0) + 1
+                continue
+
+            accepted.append(lead)
+
+        return accepted, reject_reason_counts
+
+    def _extract_employee_count(self, employee_estimate: str | None) -> int | None:
+        if not employee_estimate:
+            return None
+
+        matches = re.findall(r"\d+", employee_estimate)
+        if not matches:
+            return None
+        try:
+            return int(matches[-1])
+        except ValueError:
+            return None
 
     def _search_from_inputs(
         self,

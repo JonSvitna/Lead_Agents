@@ -32,6 +32,12 @@ class StageInput(BaseModel):
     state: str | None = Field(default=None, description="Optional state filter.")
     region: str | None = Field(default=None, description="Optional region filter.")
     radius_miles: int | None = Field(default=None, ge=1, le=250, description="Optional radius in miles.")
+    must_include_terms: list[str] = Field(default_factory=list, description="Optional terms that must appear in candidate evidence.")
+    exclude_terms: list[str] = Field(default_factory=list, description="Optional terms that should exclude candidates.")
+    include_company_types: list[str] = Field(default_factory=list, description="Optional company-type hints to include.")
+    exclude_company_types: list[str] = Field(default_factory=list, description="Optional company-type hints to exclude.")
+    employee_min: int | None = Field(default=None, ge=1, description="Optional minimum employee estimate.")
+    employee_max: int | None = Field(default=None, ge=1, description="Optional maximum employee estimate.")
 
 
 def _build_runtime() -> OpenAIAgentRuntime:
@@ -58,6 +64,12 @@ class DiscoveryTool(BaseTool):
         state: str | None = None,
         region: str | None = None,
         radius_miles: int | None = None,
+        must_include_terms: list[str] | None = None,
+        exclude_terms: list[str] | None = None,
+        include_company_types: list[str] | None = None,
+        exclude_company_types: list[str] | None = None,
+        employee_min: int | None = None,
+        employee_max: int | None = None,
     ) -> str:
         settings = Settings.from_env()
         runtime = OpenAIAgentRuntime(settings, LeadSearchTool(settings), WebsiteScraperTool(settings), LeadScoringTool(settings))
@@ -71,9 +83,23 @@ class DiscoveryTool(BaseTool):
             state=state,
             region=region,
             radius_miles=radius_miles,
+            must_include_terms=must_include_terms or [],
+            exclude_terms=exclude_terms or [],
+            include_company_types=include_company_types or [],
+            exclude_company_types=exclude_company_types or [],
+            employee_min=employee_min,
+            employee_max=employee_max,
         )
         output = asyncio.run(runtime.discover(payload))
         if not output.leads:
+            prompt_for_fields = [
+                "search_terms (what exact compliance/offer terms to target)",
+                "zip_code or city/state/region (where to search)",
+                "radius_miles (distance from the location anchor)",
+                "company_type filters (MSP, contractor, manufacturer, engineering)",
+                "size preference (SMB, mid-market, employee band)",
+                "exclusions (enterprise, universities, government agencies, etc.)",
+            ]
             diagnostics = {
                 "query": query,
                 "limit": limit,
@@ -84,12 +110,19 @@ class DiscoveryTool(BaseTool):
                 "state": state,
                 "region": region,
                 "radius_miles": radius_miles,
+                "must_include_terms": must_include_terms or [],
+                "exclude_terms": exclude_terms or [],
+                "include_company_types": include_company_types or [],
+                "exclude_company_types": exclude_company_types or [],
+                "employee_min": employee_min,
+                "employee_max": employee_max,
                 "provider_status": {
                     "firecrawl_enabled": settings.firecrawl_enabled,
                     "tavily_enabled": settings.tavily_enabled,
                     "apollo_enabled": settings.apollo_enabled,
                 },
-                "message": "No leads were discovered for the query. Configure at least one provider API key or provide seed_companies/websites.",
+                "prompt_for_fields": prompt_for_fields,
+                "message": "No leads were discovered for the query. Configure at least one provider API key, or refine criteria using the prompted fields.",
             }
             return json.dumps(diagnostics, indent=2)
         return output.model_dump_json(indent=2)
@@ -111,6 +144,12 @@ class AnalyzerTool(BaseTool):
         state: str | None = None,
         region: str | None = None,
         radius_miles: int | None = None,
+        must_include_terms: list[str] | None = None,
+        exclude_terms: list[str] | None = None,
+        include_company_types: list[str] | None = None,
+        exclude_company_types: list[str] | None = None,
+        employee_min: int | None = None,
+        employee_max: int | None = None,
     ) -> str:
         runtime = _build_runtime()
         payload = LeadIntelligenceRequest(
@@ -123,6 +162,12 @@ class AnalyzerTool(BaseTool):
             state=state,
             region=region,
             radius_miles=radius_miles,
+            must_include_terms=must_include_terms or [],
+            exclude_terms=exclude_terms or [],
+            include_company_types=include_company_types or [],
+            exclude_company_types=exclude_company_types or [],
+            employee_min=employee_min,
+            employee_max=employee_max,
         )
         discovery = asyncio.run(runtime.discover(payload))
 
@@ -155,6 +200,12 @@ class QualificationTool(BaseTool):
         state: str | None = None,
         region: str | None = None,
         radius_miles: int | None = None,
+        must_include_terms: list[str] | None = None,
+        exclude_terms: list[str] | None = None,
+        include_company_types: list[str] | None = None,
+        exclude_company_types: list[str] | None = None,
+        employee_min: int | None = None,
+        employee_max: int | None = None,
     ) -> str:
         runtime = _build_runtime()
         payload = LeadIntelligenceRequest(
@@ -167,6 +218,12 @@ class QualificationTool(BaseTool):
             state=state,
             region=region,
             radius_miles=radius_miles,
+            must_include_terms=must_include_terms or [],
+            exclude_terms=exclude_terms or [],
+            include_company_types=include_company_types or [],
+            exclude_company_types=exclude_company_types or [],
+            employee_min=employee_min,
+            employee_max=employee_max,
         )
         discovery = asyncio.run(runtime.discover(payload))
 
@@ -201,6 +258,12 @@ class OutreachTool(BaseTool):
         state: str | None = None,
         region: str | None = None,
         radius_miles: int | None = None,
+        must_include_terms: list[str] | None = None,
+        exclude_terms: list[str] | None = None,
+        include_company_types: list[str] | None = None,
+        exclude_company_types: list[str] | None = None,
+        employee_min: int | None = None,
+        employee_max: int | None = None,
     ) -> str:
         settings = Settings.from_env()
         service = LeadIntelligenceService(settings)
@@ -214,6 +277,12 @@ class OutreachTool(BaseTool):
             state=state,
             region=region,
             radius_miles=radius_miles,
+            must_include_terms=must_include_terms or [],
+            exclude_terms=exclude_terms or [],
+            include_company_types=include_company_types or [],
+            exclude_company_types=exclude_company_types or [],
+            employee_min=employee_min,
+            employee_max=employee_max,
         )
 
         try:

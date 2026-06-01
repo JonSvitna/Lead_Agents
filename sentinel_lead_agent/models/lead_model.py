@@ -125,6 +125,24 @@ class LeadIntelligenceRequest(BaseModel):
     state: str | None = Field(default=None, description="Optional state or region code filter.")
     region: str | None = Field(default=None, description="Optional broader region filter.")
     radius_miles: int | None = Field(default=None, ge=1, le=250, description="Optional distance radius in miles.")
+    must_include_terms: list[str] = Field(
+        default_factory=list,
+        description="Optional terms that must appear in candidate evidence.",
+    )
+    exclude_terms: list[str] = Field(
+        default_factory=list,
+        description="Optional terms that cause candidates to be excluded.",
+    )
+    include_company_types: list[str] = Field(
+        default_factory=list,
+        description="Optional company type hints to include (for example MSP, manufacturer).",
+    )
+    exclude_company_types: list[str] = Field(
+        default_factory=list,
+        description="Optional company type hints to exclude (for example university, agency).",
+    )
+    employee_min: int | None = Field(default=None, ge=1, description="Optional minimum employee estimate.")
+    employee_max: int | None = Field(default=None, ge=1, description="Optional maximum employee estimate.")
     websites: list[str] = Field(default_factory=list, description="Websites to analyze directly.")
     seed_companies: list[LeadSeedInput] = Field(
         default_factory=list,
@@ -141,6 +159,12 @@ class LeadIntelligenceRequest(BaseModel):
                 self.state is not None,
                 self.region is not None,
                 self.radius_miles is not None,
+                bool(self.must_include_terms),
+                bool(self.exclude_terms),
+                bool(self.include_company_types),
+                bool(self.exclude_company_types),
+                self.employee_min is not None,
+                self.employee_max is not None,
             ]
         )
 

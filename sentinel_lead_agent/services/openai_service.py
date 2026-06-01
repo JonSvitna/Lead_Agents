@@ -52,6 +52,12 @@ class OpenAIAgentRuntime:
 			state: str | None = None,
 			region: str | None = None,
 			radius_miles: int | None = None,
+			must_include_terms: list[str] | None = None,
+			exclude_terms: list[str] | None = None,
+			include_company_types: list[str] | None = None,
+			exclude_company_types: list[str] | None = None,
+			employee_min: int | None = None,
+			employee_max: int | None = None,
 		) -> str:
 			"""Search for candidate business leads and return structured JSON results."""
 			leads = await search_service.search_businesses(
@@ -64,6 +70,12 @@ class OpenAIAgentRuntime:
 				state=state,
 				region=region,
 				radius_miles=radius_miles,
+				must_include_terms=must_include_terms,
+				exclude_terms=exclude_terms,
+				include_company_types=include_company_types,
+				exclude_company_types=exclude_company_types,
+				employee_min=employee_min,
+				employee_max=employee_max,
 			)
 			return json.dumps([lead.model_dump(mode="json") for lead in leads], indent=2)
 
@@ -110,6 +122,12 @@ class OpenAIAgentRuntime:
 			state=payload.state,
 			region=payload.region,
 			radius_miles=payload.radius_miles,
+			must_include_terms=payload.must_include_terms,
+			exclude_terms=payload.exclude_terms,
+			include_company_types=payload.include_company_types,
+			exclude_company_types=payload.exclude_company_types,
+			employee_min=payload.employee_min,
+			employee_max=payload.employee_max,
 			seed_companies=payload.seed_companies,
 			websites=payload.websites,
 		)
