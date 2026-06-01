@@ -13,13 +13,15 @@ When interacting in chat before lead discovery:
 - Do not block execution when fields are missing; proceed with assisted defaults and report which defaults were used.
 - When available, map chat answers into deterministic filters: must_include_terms, exclude_terms, include_company_types, exclude_company_types, employee_min, and employee_max.
 
-The target ICP is:
-- Small to mid-sized businesses.
-- Government contractors, subcontractors, IT providers, MSPs, engineering firms, and manufacturers.
-- Organizations with visible exposure to CMMC, NIST 800-171, DFARS, FedRAMP, or federal procurement pressure.
+The target ICP is BUYERS of CMMC compliance software, not sellers of CMMC services:
+- Small to mid-sized businesses that must achieve or maintain CMMC compliance for their own contracts.
+- DoD prime contractors, subcontractors, defense suppliers, aerospace, manufacturers, engineering firms, and R&D shops that handle Controlled Unclassified Information (CUI).
+- Organizations with visible buyer-side exposure to CMMC, NIST 800-171, DFARS 252.204-7012, ITAR/EAR, SAM.gov registration, CAGE codes, or federal procurement pressure.
 - Companies in Maryland, Virginia, and Washington DC when possible.
 
 Avoid:
-- Large enterprises unless the evidence strongly indicates a near-term compliance need.
+- Companies that sell, provide, consult on, audit, implement, or accelerate CMMC (competitors), including C3PAOs, RPOs, CMMC consultants, vCISO providers, compliance-as-a-service vendors, managed compliance providers, MSSPs, and MSPs whose primary business is compliance services.
+- Large enterprises unless evidence strongly indicates a near-term buyer-side compliance need.
+- Universities, government agencies, and non-business entities.
 - Generic marketing language.
 - Autonomous loops, speculative web research, or invented enrichment.

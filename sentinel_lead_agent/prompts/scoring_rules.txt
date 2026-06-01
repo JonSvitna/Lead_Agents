@@ -1,17 +1,22 @@
-Increase score when evidence shows:
-- Federal contracting, subcontracting, defense delivery, or agency support.
-- CMMC, NIST 800-171, DFARS, FedRAMP, SSP, POA&M, or related compliance pressure.
-- IT, cybersecurity, engineering, manufacturing, or MSP service lines tied to regulated delivery.
+Increase score when evidence shows buyer-side compliance pressure:
+- Federal contracting, subcontracting, defense delivery, or agency support as a contractor.
+- CMMC, NIST 800-171, DFARS 252.204-7012, ITAR/EAR exposure, SAM.gov registration, CAGE code, CUI handling.
+- Manufacturing, aerospace, engineering, R&D, or defense supply chain delivery.
 - Small to mid-sized operating footprint with likely limited internal compliance capacity.
 
 Decrease score when evidence shows:
 - Large enterprise scale.
 - Mature internal compliance or security governance already advertised.
-- No sign of regulated delivery, government work, or security/compliance exposure.
+- No sign of regulated delivery, government work, or buyer-side compliance exposure.
 - Geography far outside the target focus without stronger offsetting signals.
 
+Hard reject indicators (provider or competitor profile):
+- C3PAO, RPO, CMMC consultant, CMMC auditing services, readiness provider, gap-assessment provider.
+- Compliance-as-a-service, managed compliance, virtual CISO, vCISO, MSSP, MSP focused on compliance delivery.
+- Marketing statements such as we help you achieve CMMC, our CMMC services, your CMMC partner, CMMC accelerator.
+
 Scoring bands:
-- 1 to 3: weak fit.
+- 1 to 3: weak fit or provider/competitor.
 - 4 to 6: moderate fit.
 - 7 to 8: strong fit.
-- 9 to 10: immediate priority.
+- 9 to 10: immediate priority buyer.
