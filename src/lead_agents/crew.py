@@ -115,7 +115,13 @@ class OutreachTool(BaseTool):
 
 @CrewBase
 class LeadAgentsCrew:
-    """AI-powered Lead Intelligence crew."""
+    """AI-powered Lead Intelligence crew.
+
+    Agents and task descriptions are loaded from the YAML files referenced by
+    ``agents_config`` and ``tasks_config`` (relative to this module).
+    The ``@CrewBase`` decorator resolves those paths and populates
+    ``self.agents_config`` / ``self.tasks_config`` as parsed dictionaries.
+    """
 
     agents_config = "config/agents.yaml"
     tasks_config = "config/tasks.yaml"
@@ -174,9 +180,18 @@ class LeadAgentsCrew:
 
     @crew
     def crew(self) -> Crew:
+        """Assembles the Lead Intelligence crew with sequential task context."""
+        tasks = self.tasks
+        # Restore explicit context so each stage sees all prior stage outputs.
+        if len(tasks) >= 2:
+            tasks[1].context = [tasks[0]]
+        if len(tasks) >= 3:
+            tasks[2].context = [tasks[0], tasks[1]]
+        if len(tasks) >= 4:
+            tasks[3].context = [tasks[0], tasks[1], tasks[2]]
         return Crew(
             agents=self.agents,
-            tasks=self.tasks,
+            tasks=tasks,
             process=Process.sequential,
             verbose=True,
         )
