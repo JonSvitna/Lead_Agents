@@ -1,2 +1,3 @@
 # Lead_Agents
-lead agents backend for lead searching
+
+Lead agents backend for lead searching, using the OpenAI SDK kit.
