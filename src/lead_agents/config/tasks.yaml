@@ -1,0 +1,27 @@
+run_discovery_stage:
+  description: >
+    Run discovery for query {query} with a limit of {limit}. Return structured discovery JSON.
+  expected_output: >
+    Structured JSON with discovered leads.
+  agent: lead_discovery_agent
+
+run_analyzer_stage:
+  description: >
+    Run analyzer stage for query {query} with a limit of {limit}. Return structured analysis JSON.
+  expected_output: >
+    Structured JSON with lead website analyses.
+  agent: website_analyzer_agent
+
+run_qualification_stage:
+  description: >
+    Run qualification stage for query {query} with a limit of {limit}. Return structured qualification JSON.
+  expected_output: >
+    Structured JSON with lead qualification output.
+  agent: qualification_agent
+
+run_outreach_stage:
+  description: >
+    Run outreach stage for query {query} with a limit of {limit}. Return the final structured pipeline JSON.
+  expected_output: >
+    Final structured JSON response from the lead-intelligence pipeline.
+  agent: outreach_generation_agent

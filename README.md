@@ -36,6 +36,14 @@ The implementation uses:
 - Playwright fallback for website analysis
 - Environment-variable based configuration
 - Structured JSON logging
+- CrewAI entrypoint with four visible stages: Discovery, Analyzer, Qualification, and Outreach
+
+CrewAI canonical package layout for deployment:
+
+- `src/lead_agents/main.py`
+- `src/lead_agents/crew.py`
+- `src/lead_agents/config/agents.yaml`
+- `src/lead_agents/config/tasks.yaml`
 
 ## Key Endpoint
 
