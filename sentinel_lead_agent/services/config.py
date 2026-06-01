@@ -7,6 +7,8 @@ class Settings(BaseModel):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
     firecrawl_api_key: str | None = None
+    tavily_api_key: str | None = None
+    apollo_api_key: str | None = None
     host: str = "0.0.0.0"
     port: int = 8000
     log_level: str = "INFO"
@@ -20,6 +22,14 @@ class Settings(BaseModel):
         return bool(self.firecrawl_api_key)
 
     @property
+    def tavily_enabled(self) -> bool:
+        return bool(self.tavily_api_key)
+
+    @property
+    def apollo_enabled(self) -> bool:
+        return bool(self.apollo_api_key)
+
+    @property
     def playwright_enabled(self) -> bool:
         return self.enable_playwright
 
@@ -29,6 +39,8 @@ class Settings(BaseModel):
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
             firecrawl_api_key=os.getenv("FIRECRAWL_API_KEY"),
+            tavily_api_key=os.getenv("TAVILY_API_KEY"),
+            apollo_api_key=os.getenv("APOLLO_API_KEY"),
             host=os.getenv("HOST", "0.0.0.0"),
             port=int(os.getenv("PORT", "8000")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),

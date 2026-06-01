@@ -1,0 +1,8 @@
+run_lead_intelligence:
+  description: >
+    Run the lead intelligence pipeline for query {query} with a limit of {limit} leads.
+    Return the resulting structured JSON exactly as produced by the tool.
+  expected_output: >
+    Structured JSON containing discovered leads, website analysis, qualification,
+    and outreach content.
+  agent: lead_intelligence_operator
