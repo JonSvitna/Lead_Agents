@@ -1,0 +1,9 @@
+crewai>=0.95.0
+openai-agents
+fastapi
+uvicorn
+playwright
+firecrawl-py
+pydantic
+python-dotenv
+httpx

@@ -1,0 +1,3 @@
+[console_scripts]
+sentinel-chat = sentinel_lead_agent.chat:main
+sentinel-search = sentinel_lead_agent.local_test:main

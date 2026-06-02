@@ -1,22 +1,31 @@
-Increase score when evidence shows buyer-side compliance pressure:
-- Federal contracting, subcontracting, defense delivery, or agency support as a contractor.
-- CMMC, NIST 800-171, DFARS 252.204-7012, ITAR/EAR exposure, SAM.gov registration, CAGE code, CUI handling.
-- Manufacturing, aerospace, engineering, R&D, or defense supply chain delivery.
-- Small to mid-sized operating footprint with likely limited internal compliance capacity.
+CMMC 2.0 BUYER LEAD SCORING RULES
 
-Decrease score when evidence shows:
-- Large enterprise scale.
-- Mature internal compliance or security governance already advertised.
-- No sign of regulated delivery, government work, or buyer-side compliance exposure.
-- Geography far outside the target focus without stronger offsetting signals.
+Score UP — strong buyer-side signals
++3  Active DoD prime or subcontract confirmed (SAM.gov, CAGE code, federal award evidence)
++2  DFARS 252.204-7012 or DFARS 252.204-7021 clause language on website or in evidence
++2  ITAR, EAR, or export-controlled product lines — company handles controlled goods
++2  Explicit CMMC language: "CMMC 2.0", "Level 2 certification", "CMMC in progress"
++2  Compliance signals: NIST 800-171, SSP, POA&M, CUI handling mentioned
++1  Defense manufacturing, aerospace, engineering, or defense R&D delivery
++1  Located in primary target region (MD, VA, DC)
++1  SMB size (10–500 employees) — limited internal compliance capacity likely
++1  Compliance pain points visible (no GRC tool named, rapid DoD growth, small IT team)
 
-Hard reject indicators (provider or competitor profile):
-- C3PAO, RPO, CMMC consultant, CMMC auditing services, readiness provider, gap-assessment provider.
-- Compliance-as-a-service, managed compliance, virtual CISO, vCISO, MSSP, MSP focused on compliance delivery.
-- Marketing statements such as we help you achieve CMMC, our CMMC services, your CMMC partner, CMMC accelerator.
+Score DOWN — weak or disqualifying signals
+-2  No sign of government, defense, or regulated delivery work in any evidence
+-2  Large enterprise (>1,000 employees) with likely internal compliance capacity
+-1  Located outside the target region with no offsetting signals
+-1  Mature security governance or compliance program already advertised
 
-Scoring bands:
-- 1 to 3: weak fit or provider/competitor.
-- 4 to 6: moderate fit.
-- 7 to 8: strong fit.
-- 9 to 10: immediate priority buyer.
+HARD REJECT — score 1–2, label as competitor or non-buyer
+  C3PAO, RPO, CMMC consultant, gap assessor, readiness accelerator
+  Compliance-as-a-service, managed compliance, virtual CISO, vCISO
+  MSSP or MSP whose primary offering is compliance delivery or security services
+  Marketing language: "we help you achieve CMMC", "CMMC services", "your CMMC partner"
+  University, government agency, nonprofit
+
+SCORE BANDS
+  9–10: Immediate priority buyer — multiple strong DoD signals, clear CMMC pressure
+   7–8: Strong fit — solid evidence of defense delivery and likely CMMC obligation
+   4–6: Moderate fit — some defense or compliance signals but evidence is incomplete
+   1–3: Weak fit or disqualified — provider profile, no defense signal, or hard reject

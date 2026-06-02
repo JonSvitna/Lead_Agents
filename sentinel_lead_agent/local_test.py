@@ -14,11 +14,12 @@ load_dotenv()
 
 
 async def run_local_test(query: str, limit: int) -> str:
+    from sentinel_lead_agent.formatters.report_formatter import format_response
     settings = Settings.from_env()
     service = LeadIntelligenceService(settings)
     payload = LeadIntelligenceRequest(query=query, limit=limit)
     response = await service.generate_intelligence(payload)
-    return response.model_dump_json(indent=2)
+    return format_response(response)
 
 
 def main() -> None:
